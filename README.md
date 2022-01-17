@@ -23,7 +23,7 @@ Omni spec docs can be found [here](https://github.com/OmniLayer/spec/blob/master
 ```
 import { createSimpleSend, decodeOmniHex } from 'omni-js';
 
-const decodedHex = await decodeOmniHex('6f6d6e69000000000000001f0000001d2ebbef40);
+const decodedHex = await decodeOmniHex('6f6d6e69000000000000001f0000001d2ebbef40');
 
 const data = createSimpleSend({
    currencyIdentifier: 31,

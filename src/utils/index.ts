@@ -1,24 +1,5 @@
 import { TFields, TParseOmniHex } from '../types';
-
-export const messagePrefix = '6f6d6e69'; // omni
-
-export const formats = {
-	simpleSend: ['messagePrefix', 'transactionVersion', 'transactionType', 'currencyIdentifier', 'numberOfCoins'],
-}
-
-export const transactionTypes = {
-	0: 'simpleSend',
-	50: 'createFixed',
-	54: 'createManaged',
-};
-
-export const fieldSizes = {
-	messagePrefix: 8,
-	transactionVersion: 4,
-	transactionType: 4,
-	currencyIdentifier: 8,
-	numberOfCoins: 16,
-};
+import { fieldSizes, fieldTypes, formats, transactionTypes } from './constants';
 
 /**
  * Convert hexadecimal to decimal.
@@ -32,10 +13,25 @@ export const hexToDec = (hex: string): number => {
  * Convert decimal to hexadecimal padded to the provided target length.
  * @param {number} dec
  * @param {number} targetLength
+ * @return {string}
  */
 export const decToHex = (dec: number, targetLength: number): string => {
 	const hex = dec.toString(16);
 	return hex.padStart(targetLength, '0');
+}
+
+/**
+ * Converts hexadecimal to ascii.
+ * @param {string} hex
+ * @return {string}
+ */
+export const hexToAscii = (hex: string): string => {
+	hex  = hex.toString();
+	var str = '';
+	for (var n = 0; n < hex.length; n += 2) {
+		str += String.fromCharCode(parseInt(hex.substr(n, 2), 16));
+	}
+	return str;
 }
 
 /**
@@ -48,10 +44,43 @@ export const getFieldFormat = (hex: string): TFields[] => {
 }
 
 /**
- * Parses the provided Omni hex.
- * @param {string} hex
+ * Returns the field type for the provided field.
+ * @param {TFields | string} field
+ * @return {string}
  */
-export const parseHex = async (hex: string): Promise<TParseOmniHex> => {
+export const getFieldType = (field: TFields | string): string => {
+	return fieldTypes[field];
+};
+
+/**
+ * Used to decode the provided hex field.
+ * @param {TFields | string} field
+ * @param {string} hex
+ * @return {string | number}
+ */
+export const decodeFieldHex = (field: TFields | string, hex: string): string | number => {
+	const fieldType = getFieldType(field);
+	let decodedField: string | number;
+	switch (fieldType) {
+		case 'string':
+			decodedField = hexToAscii(hex ?? '');
+			break;
+		case 'number':
+			decodedField = hexToDec(hex ?? '');
+			break;
+		default:
+			decodedField = '';
+			break;
+	}
+	return decodedField;
+};
+
+/**
+ * Parses the provided Omni hex into it's corresponding fields.
+ * @param {string} hex
+ * @return {Promise<TParseOmniHex>}
+ */
+export const parseOmniHex = async (hex: string): Promise<TParseOmniHex> => {
 	let i = 0;
 	let response: TParseOmniHex = {};
 	const format = getFieldFormat(hex);
@@ -66,6 +95,7 @@ export const parseHex = async (hex: string): Promise<TParseOmniHex> => {
 /**
  * Returns the transaction type for the provided Omni hex.
  * @param {string} hex
+ * @return {TFields}
  */
 export const getTransactionType = (hex: string): TFields => {
 	const value = hexToDec(hex.substring(12, 16));
